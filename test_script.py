@@ -1,7 +1,4 @@
-#! /usr/bin/env python
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import matplotlib.collections as mc
+#! /usr/bin/env python3
 import copy
 import math
 
@@ -151,7 +148,7 @@ def random_point(space, vertexes, near_vert_idx, max_dist=0.7, min_dist=0.4):
         if space.contains(out) and not space.is_object_at(out):
             return out
 
-def construct_path(vertexes, parents, goal, prev_path):
+def construct_path(space, vertexes, parents, goal, prev_path):
     nearest_point = find_nearest_point(vertexes, goal)
     if intersects_object(nearest_point, goal, space.objects):
         print("Need more iterations to find path")
@@ -240,7 +237,7 @@ def RRT(space, prev_path, iterations=100):
 
 
     #Generate path
-    path = construct_path(vertexes, parents, goal, prev_path)
+    path = construct_path(space, vertexes, parents, goal, prev_path)
     if path is None:
         return
 
@@ -298,8 +295,8 @@ def main():
         goal.header.stamp = rospy.Time.now()
         goal.pose.position.x = waypoint[0]
         goal.pose.position.y = waypoint[1]
-        q = tf.transformations.quaternion_from_euler(0., 0., 0.)
-        goal.pose.orientation = Quaternion(*q)
+        #q = tf.transformations.quaternion_from_euler(0., 0., 0.)
+        #goal.pose.orientation = Quaternion(*q)
         rospy.sleep(1)
         goal.header.stamp = rospy.Time.now()
         publisher_goal.publish(goal)
