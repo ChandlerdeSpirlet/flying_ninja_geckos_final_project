@@ -12,47 +12,6 @@ import rospy
 import tf
 from gazebo_msgs.srv import GetModelState
 
-def main():
-
-    #Initialize world representation:
-    space = Map((5,5), Robot((0.5,0.5)), Objective((3.5, 3.5)))
-
-
-    #Grab gazebo models (obstacles) and add them to the world representation:
-    model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
-
-    dimensions = (1, 1)
-
-    #Add each obstacle to the world representation and convert coordinates to world representation coordinates
-    for x in range(0, 1):
-        obj_coord = model_coordinates(str(x), "")
-        x = obj_coord.pose.position.x
-        y = obj_coord.pose.position.y
-        position = (x - 0.5, y - 0.5)
-        space.add_object(RectangleObject(position, dimensions))
-
-    #Generate initial path:
-    path, edges, vertexes = RRT(space, [], iterations=1000)
-
-    #Move robot to waypoints along the path ('path' stores tuples of x, y coordinate waypoints):
-    if path is None:
-        print("No valid path found!")
-        exit(0)
-
-    #Move to each waypoint
-    for waypoint in path:
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    main()
-
-
 
 #--------------------------------------------------------------------------------------
 #-----------------------------World Representation Classes-----------------------------
@@ -66,7 +25,7 @@ class PointObject:
 
     def draw(self, ax):
         plt.scatter(*self.position)
-        
+
 
 class Robot:
     def __init__(self, position):
@@ -75,50 +34,50 @@ class Robot:
     def draw(self, ax):
         plt.scatter(*self.position, label='robot', color='g')
 
-        
+
 class Objective:
     def __init__(self, position):
         self.position = np.array(position)
 
     def draw(self, ax):
-        plt.scatter(*self.position, label='objective', 
+        plt.scatter(*self.position, label='objective',
                     color='m')
 
-        
+
 class RectangleObject(PointObject):
     def __init__(self, position, dimensions):
         super(RectangleObject, self).__init__(position)
         self.dimensions = np.array(dimensions)
-    
+
     def contains(self, point):
         point = np.array(point)
         return np.all(self.position <= point) and np.all(self.position + self.dimensions >= point)
-    
+
     def draw(self, ax):
         rect = patches.Rectangle(self.position, *self.dimensions)
         ax.add_patch(rect)
 
-        
+
 class Map:
     def __init__(self, shape, robot, objective):
         self.shape = np.array(shape)
         self.objects = []
         self.robot = robot
         self.objective = objective
-    
+
     def get_objects_at(self, point):
         return list(filter(lambda x: x.contains(point), self.objects))
-    
+
     def is_object_at(self, point):
         return len(self.get_objects_at(point)) > 0
-    
+
     def add_object(self, o):
         self.objects.append(o)
-    
+
     def contains(self, point):
         point = np.array(point)
-        return np.all(0 <= point) and np.all(self.shape >= point)  
-    
+        return np.all(0 <= point) and np.all(self.shape >= point)
+
     def draw(self):
         fig,ax = plt.subplots(1)
         ax.set_xlim([0, self.shape[0]])
@@ -176,31 +135,18 @@ def find_nearest_point(points, point):
     point = np.asarray(point)
     return points[np.linalg.norm(points-point, axis=1).argmin()]
 
-# https://github.com/motion-planning/rrt-algorithms/blob/0dde46b4964c6782a2b5126c870367f9072c3381/src/utilities/geometry.py#L31
-def path_points(space, edge, point_dist=0.025):
-    start, end = np.array(edge[0]), np.array(edge[1])
-    dist = np.linalg.norm(end-start)
-    n_points = int(np.ceil(dist / point_dist))
-    if n_points > 1:
-        step = (end-start) / (n_points-1)
-        yield from (i * step for i in range(1, n_points))
 
-def is_path_free(space, edge):
-    for point in path_points(space, edge):
-        if space.is_object_at(point):
-            return False
-    return True
 
 def random_point(space, vertexes, near_vert_idx, max_dist=0.7, min_dist=0.4):
     while True:
         base_i = np.random.randint(near_vert_idx, len(vertexes))
         base = vertexes[base_i]
-        
+
         randoms = (np.random.uniform(min_dist, max_dist, len(space.shape)))
         signs = [np.random.choice([1,-1]) for _ in range(len(space.shape))]
-        
+
         out = base + randoms * signs
-        
+
         if space.contains(out) and not space.is_object_at(out):
             return out
 
@@ -218,8 +164,8 @@ def construct_path(vertexes, parents, goal, prev_path):
 #Returns the straight line distance from point A to point B
 def get_distance(A, B):
     return math.sqrt((B[0] - A[0])**2 + (B[1] - A[1])**2)
-    
-# Dynamic planning flag    
+
+# Dynamic planning flag
 def RRT(space, prev_path, iterations=100):
     prev_path = get_valid_path(prev_path, space.objects)
     edges = [] #Edges explored
@@ -227,7 +173,7 @@ def RRT(space, prev_path, iterations=100):
     parents = {tuple(space.robot.position): None} #Dictionary of parent vertices (child vertex: parent vertex)
     nearest_vert = space.robot.position #Nearest vertex to the goal position (initialize as robot's position)
     near_vert_idx = 0 #Index to keep track of nearest_vert's position in the vertexes list
-    
+
     #Make the goal position be the closest vert in prev_path (or the objective if that is closest)
     goal = space.objective.position
     min_dist = get_distance(nearest_vert, goal)
@@ -237,26 +183,26 @@ def RRT(space, prev_path, iterations=100):
             if dist < min_dist:
                 min_dist = dist
                 goal = v
-    
+
     min_dist = get_distance(nearest_vert, goal) #conatins the closest possible distance to the current goal reached by the tree so far
-    
+
     for _ in range(0, iterations):
         # Generate random_point for RRT (see function for details on the heuristic)
         point = random_point(space, vertexes, near_vert_idx)
-        
+
         #Loop until you get a point that can be validly added to the graph (no object intersections)
         while True:
             nearest_point = find_nearest_point(vertexes, point)
             edge = (nearest_point, point)
-    
+
             #Make sure the new edge does not intersect with an object
             if intersects_object(edge[0], edge[1], space.objects) == False:
-                
+
                 #Add information to the tree:
                 edges.append(edge)
                 vertexes.append(point)
                 parents[tuple(point)] = tuple(nearest_point)
-                
+
                 #update nearest vertex to goal
                 dist = get_distance(point, goal)
                 if min_dist > dist:
@@ -268,11 +214,11 @@ def RRT(space, prev_path, iterations=100):
             else:
                 point = random_point(space, vertexes, near_vert_idx)
                 continue
-            
+
         #If we are close enough to the current goal, we can break and generate a path:
         if get_distance(vertexes[len(vertexes)-1], goal) < 0.15:
             break
-            
+
         #See if we can connect to the old path (if it exists) via a straight line
         min_reconnect = 100
         reconnect_idx = -1
@@ -290,17 +236,17 @@ def RRT(space, prev_path, iterations=100):
             parents[tuple(prev_path[reconnect_idx])] = tuple(point)
             goal = point
             break
-                
-            
+
+
     #Generate path
     path = construct_path(vertexes, parents, goal, prev_path)
     if path is None:
         return
-    
+
     #Add edges of prev_path to edges list
     for i in range(0, len(prev_path)-1):
         edges.append((prev_path[i], prev_path[i+1]))
-        
+
     return path, edges, vertexes
 
 def get_valid_path(path, objects):
@@ -310,12 +256,36 @@ def get_valid_path(path, objects):
                 return path[0:i]
     return path
 
+def main():
+
+    #Initialize world representation:
+    space = Map((5,5), Robot((0.5,0.5)), Objective((3.5, 3.5)))
 
 
+    #Grab gazebo models (obstacles) and add them to the world representation:
+    model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
 
+    dimensions = (1, 1)
 
+    #Add each obstacle to the world representation and convert coordinates to world representation coordinates
+    for x in range(0, 1):
+        obj_coord = model_coordinates(str(x), "")
+        x = obj_coord.pose.position.x
+        y = obj_coord.pose.position.y
+        position = (x - 0.5, y - 0.5)
+        space.add_object(RectangleObject(position, dimensions))
 
+    #Generate initial path:
+    path, edges, vertexes = RRT(space, [], iterations=1000)
 
+    #Move robot to waypoints along the path ('path' stores tuples of x, y coordinate waypoints):
+    if path is None:
+        print("No valid path found!")
+        exit(0)
 
+    #Move to each waypoint
+    for waypoint in path:
+        print(waypoint)
 
-
+if __name__ == "__main__":
+    main()
