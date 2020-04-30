@@ -11,6 +11,7 @@ import numpy as np
 import rospy
 import tf
 from gazebo_msgs.srv import GetModelState
+from geometry_msgs.msg import PoseStamped, Quaternion
 
 
 #--------------------------------------------------------------------------------------
@@ -273,7 +274,8 @@ def main():
         x = obj_coord.pose.position.x
         y = obj_coord.pose.position.y
         position = (x - 0.5, y - 0.5)
-        space.add_object(RectangleObject(position, dimensions))
+        #space.add_object(RectangleObject(position, dimensions))
+        space.add_object(RectangleObject((x,y), (1,1)))
 
     #Generate initial path:
     path, edges, vertexes = RRT(space, [], iterations=1000)
@@ -283,8 +285,26 @@ def main():
         print("No valid path found!")
         exit(0)
 
+    #Initialize node and create the publisher
+    rospy.init_node("waypoint_publisher")
+    publisher_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size = 10)
+
     #Move to each waypoint
     for waypoint in path:
+        #iterate through path and move to the waypoint (lab 7). Then wait
+        #Create message for waypoint as PoseStamped message
+        goal = PoseStamped()
+        goal.header.frame_id = 'waypoint'
+        goal.header.stamp = rospy.Time.now()
+        goal.pose.position.x = waypoint[0]
+        goal.pose.position.y = waypoint[1]
+        q = tf.transformations.quaternion_from_euler(0., 0., 0.)
+        goal.pose.orientation = Quaternion(*q)
+        rospy.sleep(1)
+        goal.header.stamp = rospy.Time.now()
+        publisher_goal.publish(goal)
+        print("\n Waypoint has been published")
+        rospy.sleep(6)
         print(waypoint)
 
 if __name__ == "__main__":
