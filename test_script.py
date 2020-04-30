@@ -9,14 +9,14 @@ def main():
     z_position = object_coordinates.pose.position.z
     y_position = object_coordinates.pose.position.y
     x_position = object_coordinates.pose.position.x
-    print('x position is ')
-    print(x_position)
-    print('\n')
-    print('y position is ')
-    print(y_position)
-    print('\n')
-    print(object_coordinates.pose)
-    print(model_coordinates)
+
+    dimensions = (1, 1)
+    for x in range(0, 3):
+        obj_coord = model_coordinates(str(x), "")
+        x = obj_coord.pose.position.x
+        y = obj_coord.pose.position.y
+        position = (x - 0.5, y - 0.5)
+
 
 if __name__ == "__main__":
     main()
