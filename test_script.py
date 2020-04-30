@@ -15,7 +15,7 @@ from gazebo_msgs.srv import GetModelState
 def main():
 
     #Initialize world representation:
-    space = Map((5,5), Robot((0.5,0.5)), Objective((2.5, 3.5)))
+    space = Map((5,5), Robot((0.5,0.5)), Objective((3.5, 3.5)))
 
 
     #Grab gazebo models (obstacles) and add them to the world representation:
@@ -41,7 +41,7 @@ def main():
 
     #Move to each waypoint
     for waypoint in path:
-        
+
 
 
 
