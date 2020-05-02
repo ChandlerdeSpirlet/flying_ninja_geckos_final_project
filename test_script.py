@@ -6,7 +6,6 @@ import numpy as np
 
 
 import rospy
-import tf
 from gazebo_msgs.srv import GetModelState
 from geometry_msgs.msg import PoseStamped, Quaternion
 
@@ -254,6 +253,14 @@ def get_valid_path(path, objects):
                 return path[0:i]
     return path
 
+#https://math.stackexchange.com/questions/2975109/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr
+def euler_to_quaternion(yaw, pitch, roll):
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    return (qx, qy, qz, qw)
+
 def main():
 
     #Initialize world representation:
@@ -292,17 +299,21 @@ def main():
         #Create message for waypoint as PoseStamped message
         goal = PoseStamped()
         goal.header.frame_id = 'waypoint'
-        goal.header.stamp = rospy.Time.now()
         goal.pose.position.x = waypoint[0]
         goal.pose.position.y = waypoint[1]
-        #q = tf.transformations.quaternion_from_euler(0., 0., 0.)
-        #goal.pose.orientation = Quaternion(*q)
+        (qx, qy, qz, qw) = euler_to_quaternion(0, 0, 0)
+        goal.pose.orientation.x = qx
+        goal.pose.orientation.y = qy
+        goal.pose.orientation.z = qz
+        goal.pose.orientation.w = qw
         rospy.sleep(1)
         goal.header.stamp = rospy.Time.now()
         publisher_goal.publish(goal)
-        print("\n Waypoint has been published")
-        rospy.sleep(6)
+        print("\n Waypoint has been published:")
         print(waypoint)
+        rospy.sleep(6)
+        #Check if we need to make a new path or not: (TODO)
+        
 
 if __name__ == "__main__":
     main()
