@@ -253,6 +253,13 @@ def get_valid_path(path, objects):
                 return path[0:i]
     return path
 
+def is_path_valid(i, path, objects):
+    for v in path[(i+1) : len(path)]:
+        for o in objects:
+            if o.contains(v):
+                return False
+    return True
+
 #https://math.stackexchange.com/questions/2975109/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr
 def euler_to_quaternion(yaw, pitch, roll):
     qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
@@ -294,7 +301,7 @@ def main():
     publisher_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size = 10)
 
     #Move to each waypoint
-    for waypoint in path:
+    for i, waypoint in enumerate(path):
         #iterate through path and move to the waypoint (lab 7). Then wait
         #Create message for waypoint as PoseStamped message
         goal = PoseStamped()
@@ -312,7 +319,15 @@ def main():
         print("\n Waypoint has been published:")
         print(waypoint)
         rospy.sleep(6)
-        #Check if we need to make a new path or not: (TODO)
+        #Check if we need to make a new path or not:
+        if i < len(path)-1:
+            if !is_path_valid(i, path, space.objects):
+                #TODO: get robot position in terms of x,y
+                #position = 
+                space.robot.position = np.asarray(postion)
+                path, edges, vertexes = RRT(space, path, iterations=1000)
+
+
         
 
 if __name__ == "__main__":
