@@ -320,12 +320,12 @@ def main():
         print(waypoint)
         rospy.sleep(6)
         #Check if we need to make a new path or not:
-        if i < len(path)-1:
-            if !is_path_valid(i, path, space.objects):
+        #if i < len(path)-1:
+            #if !is_path_valid(i, path, space.objects):
                 #TODO: get robot position in terms of x,y
                 #position = 
-                space.robot.position = np.asarray(postion)
-                path, edges, vertexes = RRT(space, path, iterations=1000)
+                #space.robot.position = np.asarray(postion)
+                #path, edges, vertexes = RRT(space, path, iterations=1000)
 
 
         
