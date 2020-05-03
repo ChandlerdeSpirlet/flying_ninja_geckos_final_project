@@ -277,16 +277,12 @@ def main():
     #Grab gazebo models (obstacles) and add them to the world representation:
     model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
 
-    dimensions = (1, 1)
-
     #Add each obstacle to the world representation and convert coordinates to world representation coordinates
     obstacle_names = ['unit_box']
     for x in obstacle_names: #Ros isn't the biggest fan of obstacles with numerical names
         obj_coord = model_coordinates(x, "")
         x = obj_coord.pose.position.x
         y = obj_coord.pose.position.y
-        position = (x - 0.5, y - 0.5)
-        #space.add_object(RectangleObject(position, dimensions))
         space.add_object(RectangleObject((x,y), (1,1)))
 
     #Generate initial path:
@@ -302,9 +298,10 @@ def main():
     publisher_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size = 10)
 
     #Move to each waypoint
-    for i, waypoint in enumerate(path):
-        #iterate through path and move to the waypoint (lab 7). Then wait
-        #Create message for waypoint as PoseStamped message
+    for i in range(len(path) - 1, -1, -1): #Iterate through waypoint list backwards
+        waypoint = path[i]
+
+        #Initialize goal
         goal = PoseStamped()
         goal.header.frame_id = 'map'
         goal.pose.position.x = waypoint[0]
@@ -316,17 +313,13 @@ def main():
         goal.pose.orientation.w = qw
         rospy.sleep(1)
         goal.header.stamp = rospy.Time.now()
+
+        #Publish goal
         publisher_goal.publish(goal)
         print("\n Waypoint has been published:")
         print(waypoint)
-        rospy.sleep(6)
-        #Check if we need to make a new path or not:
-        #if i < len(path)-1:
-            #if !is_path_valid(i, path, space.objects):
-                #TODO: get robot position in terms of x,y
-                #position =
-                #space.robot.position = np.asarray(postion)
-                #path, edges, vertexes = RRT(space, path, iterations=1000)
+        #Wait for robot to arrive
+        rospy.sleep(8)
 
 
 
