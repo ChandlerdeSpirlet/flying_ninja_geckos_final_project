@@ -280,8 +280,9 @@ def main():
     dimensions = (1, 1)
 
     #Add each obstacle to the world representation and convert coordinates to world representation coordinates
-    for x in range(0, 1):
-        obj_coord = model_coordinates(str(x), "")
+    obstacle_names = ['unit_box']
+    for x in obstacle_names: #Ros isn't the biggest fan of obstacles with numerical names
+        obj_coord = model_coordinates(x, "")
         x = obj_coord.pose.position.x
         y = obj_coord.pose.position.y
         position = (x - 0.5, y - 0.5)
@@ -297,7 +298,7 @@ def main():
         exit(0)
 
     #Initialize node and create the publisher
-    rospy.init_node("waypoint_publisher")
+    rospy.init_node("goal_publisher")
     publisher_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size = 10)
 
     #Move to each waypoint
@@ -305,7 +306,7 @@ def main():
         #iterate through path and move to the waypoint (lab 7). Then wait
         #Create message for waypoint as PoseStamped message
         goal = PoseStamped()
-        goal.header.frame_id = 'waypoint'
+        goal.header.frame_id = 'map'
         goal.pose.position.x = waypoint[0]
         goal.pose.position.y = waypoint[1]
         (qx, qy, qz, qw) = euler_to_quaternion(0, 0, 0)
@@ -323,12 +324,12 @@ def main():
         #if i < len(path)-1:
             #if !is_path_valid(i, path, space.objects):
                 #TODO: get robot position in terms of x,y
-                #position = 
+                #position =
                 #space.robot.position = np.asarray(postion)
                 #path, edges, vertexes = RRT(space, path, iterations=1000)
 
 
-        
+
 
 if __name__ == "__main__":
     main()
