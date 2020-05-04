@@ -271,14 +271,14 @@ def euler_to_quaternion(yaw, pitch, roll):
 def main():
 
     #Initialize world representation:
-    space = Map((5,5), Robot((0.5,0.5)), Objective((3.5, 3.5)))
+    space = Map((5,5), Robot((0.5,0.5)), Objective((4.0, 4.0)))
 
 
     #Grab gazebo models (obstacles) and add them to the world representation:
     model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
 
     #Add each obstacle to the world representation and convert coordinates to world representation coordinates
-    obstacle_names = ['unit_box']
+    obstacle_names = ['unit_box', 'unit_box_0', 'unit_box_1']
     for x in obstacle_names: #Ros isn't the biggest fan of obstacles with numerical names
         obj_coord = model_coordinates(x, "")
         x = obj_coord.pose.position.x
